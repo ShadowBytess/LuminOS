@@ -1,6 +1,6 @@
-# myos
+# Redforge (WIP name)
 
-A custom Linux-kernel OS with its own userspace. Stage 1: a Rust PID 1 that boots to a BusyBox debug shell in QEMU.
+A custom Linux-kernel OS with its own userspace. Stage 1: a Rust PID 1 that boots to a BusyBox debug shell in QEMU. (Completed)
 
 ## Layout
 
