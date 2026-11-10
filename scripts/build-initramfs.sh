@@ -1,24 +1,23 @@
 #!/usr/bin/env bash
-# Build a minimal initramfs containing our Rust init (as /init), a static-ish
-# BusyBox for a debug shell, and the glibc runtime libraries both need.
-# Output: build/initramfs.cpio.gz
+# Build the initramfs containing Redforge PID 1, myosctl, BusyBox and services.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD="$ROOT/build"
 RFS="$BUILD/rootfs"
 INIT_BIN="$ROOT/target/release/init"
+CTL_BIN="$ROOT/target/release/myosctl"
 
-[[ -x "$INIT_BIN" ]] || { echo "Build the init first: cargo build --release" >&2; exit 1; }
-
+[[ -x "$INIT_BIN" && -x "$CTL_BIN" ]] || {
+    echo "Build both binaries first: cargo build --release --workspace" >&2
+    exit 1
+}
 BUSYBOX="${BUSYBOX:-$(command -v busybox || true)}"
-[[ -n "$BUSYBOX" ]] || { echo "busybox not found; install it (e.g. apt install busybox-static) or set BUSYBOX=/path" >&2; exit 1; }
+[[ -n "$BUSYBOX" ]] || { echo "busybox not found; install it (e.g. busybox-static) or set BUSYBOX=/path" >&2; exit 1; }
 
 rm -rf "$RFS"
 mkdir -p "$RFS"/{bin,sbin,dev,proc,sys,run,tmp,etc,root,usr/bin,usr/sbin,lib,lib64}
 
-# Copy a binary plus every shared library it links against, preserving paths
-# (so the glibc dynamic loader is found at its expected location).
 install_with_libs() {
     local src="$1" dest="$2"
     install -D -m 0755 "$src" "$RFS$dest"
@@ -32,15 +31,15 @@ install_with_libs() {
 }
 
 install_with_libs "$INIT_BIN" /init
+install_with_libs "$CTL_BIN" /sbin/myosctl
 install_with_libs "$BUSYBOX" /bin/busybox
-
-# Busybox applet symlinks so the debug shell has ls, cat, mount, etc.
 "$BUSYBOX" --list-full 2>/dev/null | while read -r applet; do
     [[ "$applet" == "bin/busybox" ]] && continue
     mkdir -p "$RFS/$(dirname "$applet")"
     ln -sf /bin/busybox "$RFS/$applet"
 done
 
+install -D -m 0644 "$ROOT"/rootfs-overlay/etc/redforge/services/*.toml "$RFS/etc/redforge/services/"
 echo "root:x:0:0:root:/root:/bin/sh" > "$RFS/etc/passwd"
 echo "root:x:0:" > "$RFS/etc/group"
 

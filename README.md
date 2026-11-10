@@ -1,41 +1,100 @@
 # Redforge (WIP name)
 
-A custom Linux-kernel OS with its own userspace. Stage 1: a Rust PID 1 that boots to a BusyBox debug shell in QEMU. (Completed)
+A custom Linux-kernel OS with its own Rust userspace. Stage 1 boots a Linux kernel and Rust PID 1 to a BusyBox shell in QEMU. Stage 2 adds a TOML-configured service supervisor and `myosctl`.
 
 ## Layout
 
 ```
-init/                  Rust PID 1 (mounts /proc /sys /dev, starts shell, reaps children)
-scripts/build-kernel.sh      download + configure + build the Linux kernel
-scripts/build-initramfs.sh   pack init + busybox + glibc libs into an initramfs
-scripts/run-qemu.sh          boot it
-kernel/myos.config           saved kernel config (created on first build)
-build/                       all generated output
+init/                       Rust PID 1 and service manager
+myosctl/                    Unix-socket control client
+rootfs-overlay/etc/redforge/services/  One TOML file per boot service
+scripts/                    Kernel, initramfs and QEMU build scripts
+kernel/myos.config          Saved kernel config
+ tests/                     Host-side development service definitions
+build/                      Generated output (ignored by git)
 ```
 
-## Host requirements (Debian/Ubuntu names)
+## Host requirements
+
+Install the kernel build tools, BusyBox, QEMU and Rust as described below (package names vary by distribution):
 
 ```
-sudo apt install build-essential flex bison libssl-dev libelf-dev bc \
-                 curl xz-utils cpio gzip busybox-static qemu-system-x86 python3
-curl https://sh.rustup.rs -sSf | sh
+sudo pacman -S --needed base-devel flex bison openssl libelf bc curl xz cpio gzip busybox qemu-system-x86 rustup
 ```
+
+Make sure a stable Rust toolchain is installed with `rustup default stable`.
 
 ## Build and boot
 
 ```
-make kernel        # first time only, takes a while
-make run           # builds init, packs initramfs, boots QEMU
+cargo build --release --workspace
+make kernel        # first time only; downloads/builds the kernel
+make run           # rebuilds initramfs and boots QEMU
 ```
 
-Inside the guest you get a shell. Type `poweroff` or `exit` to shut down.
-Customise the kernel with `scripts/build-kernel.sh menuconfig`.
+Inside the guest:
+
+```
+/sbin/myosctl status
+/sbin/myosctl restart heartbeat
+/sbin/myosctl stop heartbeat
+/sbin/myosctl start heartbeat
+```
+
+Type `poweroff` in the console shell to ask BusyBox to power off the guest. The init process also accepts `shutdown` through `myosctl`.
+
+## Service definitions
+
+Put one `.toml` file per service in `/etc/redforge/services/` (source files live in `rootfs-overlay/etc/redforge/services/`). Example:
+
+```toml
+name = "example"
+command = "/bin/busybox"
+args = ["sh", "-c", "echo hello; sleep 60"]
+depends_on = []
+enabled = true
+restart = "on-failure" # never, on-failure, always
+restart_delay_secs = 1
+max_restart_delay_secs = 30
+inherit_stdio = false
+
+[env]
+MODE = "production"
+```
+
+Dependencies start before dependents; shutdown stops them in reverse order. Dependency cycles and missing dependencies are rejected. Crashed services follow their restart policy with exponential backoff capped by `max_restart_delay_secs`. Non-console service output is appended to `/run/redforge/logs/SERVICE.log`.
+
+`inherit_stdio = true` is intended for interactive console services. Other services receive stdin from `/dev/null` and have stdout/stderr appended to their log.
+
+## Host development mode (no QEMU required)
+
+This runs the exact same supervisor without mounting filesystems or requiring PID 1:
+
+```
+cargo run --release -p init -- --dev --config ./tests --socket /tmp/redforge-init.sock
+```
+
+In another terminal:
+
+```
+cargo run --release -p myosctl -- --socket /tmp/redforge-init.sock status
+cargo run --release -p myosctl -- --socket /tmp/redforge-init.sock restart worker
+cargo run --release -p myosctl -- --socket /tmp/redforge-init.sock shutdown
+```
+
+Host-mode logs go to `./build/logs/`. Stop the dev supervisor with Ctrl-C or the `shutdown` command.
+
+## Notes / current scope
+
+- This is an early service manager, not yet a complete replacement for systemd/OpenRC.
+- `stop` currently terminates the service's direct process; process-group management and graceful per-service stop timeouts are future work.
+- The initramfs still uses BusyBox and the existing debug console. The disk-backed root filesystem remains the next stage.
 
 ## Roadmap
 
-1. Boot kernel + Rust init in QEMU (this stage)
-2. Turn init into a service manager (dependencies, supervision, logging)
-3. Base rootfs on a real disk image, glibc + coreutils + udev
+1. Boot kernel + Rust init in QEMU (completed)
+2. Service manager, dependency ordering, supervision, logs and control socket (implemented; needs local build/runtime testing)
+3. Persistent disk image and fuller root filesystem
 4. Package manager and build recipes
 5. Graphics stack (Mesa, libinput, seatd, Wayland), then Hyprland
 6. Thunar, Rofi, bar, notification daemon

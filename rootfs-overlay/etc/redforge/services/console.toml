@@ -1,0 +1,7 @@
+# Interactive rescue shell on the kernel console.
+name = "console"
+command = "/bin/busybox"
+args = ["setsid", "cttyhack", "/bin/sh"]
+enabled = true
+restart = "never"
+inherit_stdio = true

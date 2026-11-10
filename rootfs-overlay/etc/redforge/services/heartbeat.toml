@@ -1,0 +1,8 @@
+# Small example service. Remove or disable this once you add real daemons.
+name = "heartbeat"
+command = "/bin/busybox"
+args = ["sh", "-c", "while true; do echo 'Redforge is alive'; sleep 60; done"]
+enabled = true
+restart = "always"
+restart_delay_secs = 1
+max_restart_delay_secs = 30

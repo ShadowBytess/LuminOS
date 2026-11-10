@@ -1,5 +1,5 @@
 [workspace]
-members = ["init"]
+members = ["init", "redforgectl"]
 resolver = "2"
 
 [profile.release]

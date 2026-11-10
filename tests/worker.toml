@@ -1,0 +1,8 @@
+name = "worker"
+command = "/bin/sh"
+args = ["-c", "echo 'worker started'; sleep 2; exit 1"]
+depends_on = ["heartbeat"]
+enabled = true
+restart = "on-failure"
+restart_delay_secs = 1
+max_restart_delay_secs = 8

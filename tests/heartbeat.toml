@@ -1,0 +1,7 @@
+name = "heartbeat"
+command = "/bin/sh"
+args = ["-c", "while true; do echo 'Redforge dev supervisor is alive'; sleep 5; done"]
+enabled = true
+restart = "always"
+restart_delay_secs = 1
+max_restart_delay_secs = 8

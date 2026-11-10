@@ -1,0 +1,19 @@
+name: Mirror to Codeberg
+
+on:
+  push:
+    branches: [ main, master ] # Change to your default branch name
+
+jobs:
+  codeberg_mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Mirror to Codeberg
+        run: |
+          git remote add codeberg https://LumiiTheKitty:${{ secrets.CODEBERG_TOKEN }}@codeberg.org/LumiiTheKitty/Redforge.git
+          git push --prune --force --atomic codeberg refs/heads/*:refs/heads/* refs/tags/*:refs/tags/*
