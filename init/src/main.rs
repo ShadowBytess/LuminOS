@@ -1,10 +1,10 @@
-//! Redforge PID 1 and service supervisor.
+//! LuminOS PID 1 and service supervisor.
 //!
 //! Normal boot: init mounts the kernel pseudo-filesystems, loads one TOML file
 //! per service, starts enabled services in dependency order, supervises them,
-//! and accepts control commands over /run/redforge/init.sock.
+//! and accepts control commands over /run/luminos/init.sock.
 //!
-//! Host development: `init --dev --config ./rootfs-overlay/etc/redforge/services`
+//! Host development: `init --dev --config ./rootfs-overlay/etc/luminos/services`
 //! skips mounts and the PID-1 requirement. It still runs the same supervisor.
 
 mod service;
@@ -20,8 +20,8 @@ use std::thread;
 use std::time::Duration;
 
 static SHUTDOWN: AtomicBool = AtomicBool::new(false);
-const DEFAULT_CONFIG_DIR: &str = "/etc/redforge/services";
-const DEFAULT_SOCKET: &str = "/run/redforge/init.sock";
+const DEFAULT_CONFIG_DIR: &str = "/etc/luminos/services";
+const DEFAULT_SOCKET: &str = "/run/luminos/init.sock";
 
 extern "C" fn handle_signal(_: libc::c_int) {
     SHUTDOWN.store(true, Ordering::SeqCst);
@@ -46,7 +46,7 @@ fn mount_fs(source: &str, target: &str, fstype: &str, flags: libc::c_ulong) {
     if rc != 0 {
         let err = io::Error::last_os_error();
         if err.raw_os_error() != Some(libc::EBUSY) {
-            eprintln!("redforge-init: mount {fstype} on {target}: {err}");
+            eprintln!("luminos-init: mount {fstype} on {target}: {err}");
         }
     }
 }
@@ -143,10 +143,10 @@ fn run(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
     let configs = load_configs(&config_dir)?;
     let mut manager = Manager::new(configs, dev_mode)?;
     let listener = create_listener(&socket_path)?;
-    println!("redforge-init: supervisor online (dev={dev_mode}), socket={}", socket_path.display());
+    println!("luminos-init: supervisor online (dev={dev_mode}), socket={}", socket_path.display());
 
     if let Err(err) = manager.start_enabled() {
-        eprintln!("redforge-init: startup warning: {err}");
+        eprintln!("luminos-init: startup warning: {err}");
     }
 
     while !SHUTDOWN.load(Ordering::SeqCst) && !manager.shutdown_requested() {
@@ -154,14 +154,14 @@ fn run(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
             match listener.accept() {
                 Ok((stream, _)) => handle_client(stream, &mut manager),
                 Err(err) if err.kind() == io::ErrorKind::WouldBlock => break,
-                Err(err) => eprintln!("redforge-init: socket accept: {err}"),
+                Err(err) => eprintln!("luminos-init: socket accept: {err}"),
             }
         }
         manager.poll_children();
         thread::sleep(Duration::from_millis(100));
     }
 
-    println!("redforge-init: shutting down services");
+    println!("luminos-init: shutting down services");
     manager.stop_all();
     let _ = fs::remove_file(&socket_path);
 
@@ -178,7 +178,7 @@ fn run(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
 fn main() {
     let args = env::args().skip(1).collect::<Vec<_>>();
     if let Err(err) = run(&args) {
-        eprintln!("redforge-init: {err}");
+        eprintln!("luminos-init: {err}");
         eprintln!("usage: init [--dev] [--config DIR] [--socket PATH]");
         std::process::exit(1);
     }

@@ -62,7 +62,7 @@ impl Manager {
                 return Err(io::Error::new(io::ErrorKind::InvalidData, format!("duplicate service name: {name}")));
             }
         }
-        let log_dir = if dev_mode { PathBuf::from("./build/logs") } else { PathBuf::from("/run/redforge/logs") };
+        let log_dir = if dev_mode { PathBuf::from("./build/logs") } else { PathBuf::from("/run/luminos/logs") };
         fs::create_dir_all(&log_dir)?;
         let manager = Self { services, log_dir, shutdown: false };
         manager.validate_dependencies()?;
@@ -140,7 +140,7 @@ impl Manager {
         }
         match command.spawn() {
             Ok(child) => {
-                println!("redforge-init: started {name} (pid {})", child.id());
+                println!("luminos-init: started {name} (pid {})", child.id());
                 svc.child = Some(child);
                 svc.last_exit = None;
                 Ok(())
@@ -160,7 +160,7 @@ impl Manager {
         if let Some(mut child) = svc.child.take() {
             let _ = child.kill();
             let _ = child.wait();
-            println!("redforge-init: stopped {name}");
+            println!("luminos-init: stopped {name}");
         }
         Ok(())
     }
@@ -198,7 +198,7 @@ impl Manager {
                 use std::os::unix::process::ExitStatusExt;
                 self.record_exit(&name, ExitStatus::from_raw(raw_status));
             } else {
-                println!("redforge-init: reaped orphan child {pid}");
+                println!("luminos-init: reaped orphan child {pid}");
             }
         }
 
@@ -206,7 +206,7 @@ impl Manager {
             svc.restart_at.filter(|when| Instant::now() >= *when).map(|_| name.clone())
         }).collect::<Vec<_>>();
         for name in due {
-            if let Err(err) = self.start_service(&name) { eprintln!("redforge-init: restart {name}: {err}"); }
+            if let Err(err) = self.start_service(&name) { eprintln!("luminos-init: restart {name}: {err}"); }
         }
     }
 
@@ -227,10 +227,10 @@ impl Manager {
                 let delay = base.saturating_mul(1u64 << shift).min(max);
                 svc.restart_count = svc.restart_count.saturating_add(1);
                 svc.restart_at = Some(Instant::now() + Duration::from_secs(delay));
-                eprintln!("redforge-init: {name} exited ({status}); restart in {delay}s");
+                eprintln!("luminos-init: {name} exited ({status}); restart in {delay}s");
             } else {
                 svc.restart_at = None;
-                println!("redforge-init: {name} exited ({status})");
+                println!("luminos-init: {name} exited ({status})");
             }
         }
     }

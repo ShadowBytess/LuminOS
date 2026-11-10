@@ -1,6 +1,6 @@
 name = "heartbeat"
 command = "/bin/sh"
-args = ["-c", "while true; do echo 'Redforge dev supervisor is alive'; sleep 5; done"]
+args = ["-c", "while true; do echo 'LuminOS dev supervisor is alive'; sleep 5; done"]
 enabled = true
 restart = "always"
 restart_delay_secs = 1

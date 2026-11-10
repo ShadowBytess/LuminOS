@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build the initramfs containing Redforge PID 1, myosctl, BusyBox and services.
+# Build the initramfs containing LuminOS PID 1, myosctl, BusyBox and services.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -39,7 +39,7 @@ install_with_libs "$BUSYBOX" /bin/busybox
     ln -sf /bin/busybox "$RFS/$applet"
 done
 
-install -D -m 0644 "$ROOT"/rootfs-overlay/etc/redforge/services/*.toml "$RFS/etc/redforge/services/"
+install -D -m 0644 "$ROOT"/rootfs-overlay/etc/luminos/services/*.toml "$RFS/etc/luminos/services/"
 echo "root:x:0:0:root:/root:/bin/sh" > "$RFS/etc/passwd"
 echo "root:x:0:" > "$RFS/etc/group"
 

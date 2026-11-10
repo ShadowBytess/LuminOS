@@ -1,5 +1,5 @@
 [workspace]
-members = ["init", "redforgectl"]
+members = ["init", "luminosctl"]
 resolver = "2"
 
 [profile.release]

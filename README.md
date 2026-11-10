@@ -1,4 +1,4 @@
-# Redforge (WIP name)
+# LuminOS (WIP name)
 
 A custom Linux-kernel OS with its own Rust userspace. Stage 1 boots a Linux kernel and Rust PID 1 to a BusyBox shell in QEMU. Stage 2 adds a TOML-configured service supervisor and `myosctl`.
 
@@ -7,7 +7,7 @@ A custom Linux-kernel OS with its own Rust userspace. Stage 1 boots a Linux kern
 ```
 init/                       Rust PID 1 and service manager
 myosctl/                    Unix-socket control client
-rootfs-overlay/etc/redforge/services/  One TOML file per boot service
+rootfs-overlay/etc/luminos/services/  One TOML file per boot service
 scripts/                    Kernel, initramfs and QEMU build scripts
 kernel/myos.config          Saved kernel config
  tests/                     Host-side development service definitions
@@ -45,7 +45,7 @@ Type `poweroff` in the console shell to ask BusyBox to power off the guest. The 
 
 ## Service definitions
 
-Put one `.toml` file per service in `/etc/redforge/services/` (source files live in `rootfs-overlay/etc/redforge/services/`). Example:
+Put one `.toml` file per service in `/etc/luminos/services/` (source files live in `rootfs-overlay/etc/luminos/services/`). Example:
 
 ```toml
 name = "example"
@@ -62,7 +62,7 @@ inherit_stdio = false
 MODE = "production"
 ```
 
-Dependencies start before dependents; shutdown stops them in reverse order. Dependency cycles and missing dependencies are rejected. Crashed services follow their restart policy with exponential backoff capped by `max_restart_delay_secs`. Non-console service output is appended to `/run/redforge/logs/SERVICE.log`.
+Dependencies start before dependents; shutdown stops them in reverse order. Dependency cycles and missing dependencies are rejected. Crashed services follow their restart policy with exponential backoff capped by `max_restart_delay_secs`. Non-console service output is appended to `/run/luminos/logs/SERVICE.log`.
 
 `inherit_stdio = true` is intended for interactive console services. Other services receive stdin from `/dev/null` and have stdout/stderr appended to their log.
 
@@ -71,15 +71,15 @@ Dependencies start before dependents; shutdown stops them in reverse order. Depe
 This runs the exact same supervisor without mounting filesystems or requiring PID 1:
 
 ```
-cargo run --release -p init -- --dev --config ./tests --socket /tmp/redforge-init.sock
+cargo run --release -p init -- --dev --config ./tests --socket /tmp/luminos-init.sock
 ```
 
 In another terminal:
 
 ```
-cargo run --release -p myosctl -- --socket /tmp/redforge-init.sock status
-cargo run --release -p myosctl -- --socket /tmp/redforge-init.sock restart worker
-cargo run --release -p myosctl -- --socket /tmp/redforge-init.sock shutdown
+cargo run --release -p myosctl -- --socket /tmp/luminos-init.sock status
+cargo run --release -p myosctl -- --socket /tmp/luminos-init.sock restart worker
+cargo run --release -p myosctl -- --socket /tmp/luminos-init.sock shutdown
 ```
 
 Host-mode logs go to `./build/logs/`. Stop the dev supervisor with Ctrl-C or the `shutdown` command.
