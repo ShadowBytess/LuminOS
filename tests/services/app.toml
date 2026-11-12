@@ -1,0 +1,4 @@
+name = "app"
+command = "/bin/sh"
+args = ["-c", "echo app up; exec sleep 7778"]
+depends_on = ["prep"]

@@ -1,0 +1,6 @@
+name = "prep"
+type = "oneshot"
+command = "/bin/sh"
+args = ["-c", "echo prepping; sleep 1; echo prepared"]
+depends_on = ["base"]
+restart = "never"

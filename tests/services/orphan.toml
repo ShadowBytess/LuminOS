@@ -1,0 +1,3 @@
+name = "orphan"
+command = "/bin/true"
+depends_on = ["ghost"]

@@ -1,0 +1,3 @@
+name = "base"
+command = "/bin/sh"
+args = ["-c", "echo base up; exec sleep 7777"]

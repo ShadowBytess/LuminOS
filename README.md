@@ -1,12 +1,12 @@
 # LuminOS (WIP name)
 
-A custom Linux-kernel OS with its own Rust userspace. Stage 1 boots a Linux kernel and Rust PID 1 to a BusyBox shell in QEMU. Stage 2 adds a TOML-configured service supervisor and `myosctl`.
+A custom Linux-kernel OS with its own Rust userspace. Stage 1 boots a Linux kernel and Rust PID 1 to a BusyBox shell in QEMU. Stage 2 adds a TOML-configured service supervisor and `luminosctl`.
 
 ## Layout
 
 ```
 init/                       Rust PID 1 and service manager
-myosctl/                    Unix-socket control client
+luminosctl/                    Unix-socket control client
 rootfs-overlay/etc/luminos/services/  One TOML file per boot service
 scripts/                    Kernel, initramfs and QEMU build scripts
 kernel/myos.config          Saved kernel config
@@ -35,13 +35,13 @@ make run           # rebuilds initramfs and boots QEMU
 Inside the guest:
 
 ```
-/sbin/myosctl status
-/sbin/myosctl restart heartbeat
-/sbin/myosctl stop heartbeat
-/sbin/myosctl start heartbeat
+/sbin/luminosctl status
+/sbin/luminosctl restart heartbeat
+/sbin/luminosctl stop heartbeat
+/sbin/luminosctl start heartbeat
 ```
 
-Type `poweroff` in the console shell to ask BusyBox to power off the guest. The init process also accepts `shutdown` through `myosctl`.
+Type `poweroff` in the console shell to ask BusyBox to power off the guest. The init process also accepts `shutdown` through `luminosctl`.
 
 ## Service definitions
 
@@ -77,9 +77,9 @@ cargo run --release -p init -- --dev --config ./tests --socket /tmp/luminos-init
 In another terminal:
 
 ```
-cargo run --release -p myosctl -- --socket /tmp/luminos-init.sock status
-cargo run --release -p myosctl -- --socket /tmp/luminos-init.sock restart worker
-cargo run --release -p myosctl -- --socket /tmp/luminos-init.sock shutdown
+cargo run --release -p luminosctl -- --socket /tmp/luminos-init.sock status
+cargo run --release -p luminosctl -- --socket /tmp/luminos-init.sock restart worker
+cargo run --release -p luminosctl -- --socket /tmp/luminos-init.sock shutdown
 ```
 
 Host-mode logs go to `./build/logs/`. Stop the dev supervisor with Ctrl-C or the `shutdown` command.

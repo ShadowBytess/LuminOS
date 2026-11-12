@@ -1,0 +1,7 @@
+name = "flaky"
+command = "/bin/sh"
+args = ["-c", "echo flaky starting; exit 1"]
+restart = "on-failure"
+restart_delay_secs = 1
+max_restart_delay_secs = 4
+enabled = false

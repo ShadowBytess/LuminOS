@@ -1,0 +1,6 @@
+name = "forker"
+command = "/bin/sh"
+# The shell stays alive and owns a background child: stopping must kill both.
+args = ["-c", "sleep 7779 & wait"]
+restart = "never"
+enabled = false

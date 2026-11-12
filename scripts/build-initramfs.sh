@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Build the initramfs containing LuminOS PID 1, myosctl, BusyBox and services.
+# Build the initramfs containing LuminOS PID 1, luminosctl, BusyBox and services.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD="$ROOT/build"
 RFS="$BUILD/rootfs"
 INIT_BIN="$ROOT/target/release/init"
-CTL_BIN="$ROOT/target/release/myosctl"
+CTL_BIN="$ROOT/target/release/luminosctl"
 
 [[ -x "$INIT_BIN" && -x "$CTL_BIN" ]] || {
     echo "Build both binaries first: cargo build --release --workspace" >&2
@@ -31,7 +31,7 @@ install_with_libs() {
 }
 
 install_with_libs "$INIT_BIN" /init
-install_with_libs "$CTL_BIN" /sbin/myosctl
+install_with_libs "$CTL_BIN" /sbin/luminosctl
 install_with_libs "$BUSYBOX" /bin/busybox
 "$BUSYBOX" --list-full 2>/dev/null | while read -r applet; do
     [[ "$applet" == "bin/busybox" ]] && continue
@@ -39,6 +39,7 @@ install_with_libs "$BUSYBOX" /bin/busybox
     ln -sf /bin/busybox "$RFS/$applet"
 done
 
+mkdir -p "$RFS/etc/luminos/services"
 install -D -m 0644 "$ROOT"/rootfs-overlay/etc/luminos/services/*.toml "$RFS/etc/luminos/services/"
 echo "root:x:0:0:root:/root:/bin/sh" > "$RFS/etc/passwd"
 echo "root:x:0:" > "$RFS/etc/group"

@@ -1,0 +1,5 @@
+name = "stubborn"
+command = "/bin/sh"
+args = ["-c", "trap '' TERM; echo stubborn up; while true; do sleep 1; done"]
+stop_timeout_secs = 1
+enabled = false

@@ -1,0 +1,3 @@
+name = "failing-start"
+command = "/nonexistent/binary"
+restart = "never"
